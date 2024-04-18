@@ -4,9 +4,9 @@ import constants from './constants';
 
 function Home () {
     const [currentAccount, setCurrentAccount] = useState("");
-    const [contractInstance, setcontractInstance] = useState('');
+    const [contractInstance, setContractInstance] = useState(false);
     const [status, setStatus] = useState(false);
-    const [isWinner, setIsWinner] = useState('');
+    const [isWinner, setIsWinner] = useState(false);
 
     useEffect(() => {
         const loadBlockchainData = async () => {
@@ -35,24 +35,49 @@ function Home () {
             }
         };
 
-        const contract = async () => {
+        // const contract = async () => {
+        //     const provider = new ethers.providers.Web3Provider(window.ethereum);
+        //     const signer = provider.getSigner();
+        //     const contractIns = new ethers.Contract(constants.contractAddress, constants.contractAbi, signer);
+        //     setcontractInstance(contractIns);
+        //     const status = await contractInstance.isComplete();
+        //     setStatus(status);
+        //     const winner = await contractInstance.getWinner();
+        //     if (winner === currentAccount) {
+        //         setIsWinner(true);
+        //     } else {
+        //         setIsWinner(false);
+        //     }
+        // }
+
+        const setupContract = async () => {
             const provider = new ethers.providers.Web3Provider(window.ethereum);
             const signer = provider.getSigner();
             const contractIns = new ethers.Contract(constants.contractAddress, constants.contractAbi, signer);
-            setcontractInstance(contractIns);
-            const status = await contractInstance.isComplete();
-            setStatus(status);
-            const winner = await contractInstance.getWinner();
-            if (winner === currentAccount) {
-                setIsWinner(true);
-            } else {
-                setIsWinner(false);
-            }
-        }
+            setContractInstance(contractIns);
+            const lotteryStatus = await contractIns.isComplete();
+            setStatus(lotteryStatus);
+        };
 
         loadBlockchainData();
-        contract();
+        // contract();
+        setupContract();
     }, [currentAccount]);
+
+    //new
+    useEffect(() => {
+        const checkWinner = async () => {
+            if (contractInstance) {
+                const winner = await contractInstance.getWinner();
+                setIsWinner(winner.toLowerCase() === currentAccount);
+                // console.log("winner"+winner);
+                // console.log("currentAccount"+currentAccount);
+                // console.log("iswinner"+isWinner);
+            }
+        };
+
+        checkWinner();
+    }, [contractInstance, currentAccount]);
 
     const enterLottery = async () => {
         const amountToSend = ethers.utils.parseEther('0.001');
